@@ -106,5 +106,16 @@ class RecipeTest(TestCase):
         self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
         self.assertEqual(patch_response.data['name'], "Updated Cake")
 
+    def test_recipe_str_method(self):
+        """Test that the string representation of Recipe returns the name."""
+        recipe = Recipe.objects.create(user=self.user, name="Quick Bread", description="Simple bread", servings=4)
+        self.assertEqual(str(recipe), "Quick Bread (4 servings)")
+
+    def test_recipe_ingredient_str_method(self):
+        """Test string representation of RecipeIngredient shows readable link."""
+        recipe = Recipe.objects.create(user=self.user, name="Bread", description="", servings=4)
+        ri = RecipeIngredient.objects.create(recipe=recipe, ingredient=self.flour, amount=250, unit="g")
+        self.assertEqual(str(ri), f"250 g of {self.flour.name} in {recipe.name}")
+
 
 

@@ -35,3 +35,16 @@ class IngredientTests(TestCase):
         response = self.client.get('/api/inventory/ingredients/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
+
+    def test_retrieve_ingredient_detail(self):
+        """Test retrieving a single ingredient via detail view."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Vanilla", quantity=10, unit="ml", cost=2.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=5)
+        get_response = self.client.get(f"/api/inventory/ingredients/{ingredient.id}")
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data['name'], "Vanilla")
+
+    def test_ingredient_str_method(self):
+        """Test that the string representation of Ingredient returns the name."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Salt", quantity=50, unit="g", cost=1.00, expiration_date="2025-12-31", low_stock_threshold=10)
+        self.assertEqual(str(ingredient), "Salt (50 g)")

@@ -37,3 +37,12 @@ class UserAuthTests(TestCase):
         response = self.client.post(self.login_url, login_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
+
+    def test_login_user_invalid_credentials(self):
+        """Test login fails with incorrect password."""
+        self.client.post(self.register_url, self.user_data, format='json')
+
+        bad_login = {"username": "testuser", "password": "wrongpass"}
+        response = self.client.post(self.login_url, bad_login, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("error", response.data)
