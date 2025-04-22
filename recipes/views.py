@@ -15,3 +15,11 @@ class RecipeListCreateView(generics.ListCreateAPIView):
     # specify what user to be assigned
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class RecipeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # only show ingredients for logged in user
+        return Recipe.objects.filter(user=self.request.user)
