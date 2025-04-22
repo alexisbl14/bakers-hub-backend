@@ -10,7 +10,7 @@ class Recipe(models.Model):
     servings = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True) # track when recipe was created
 
-        # to display object nicely
+    # to display object nicely
     def __str__(self):
         return f"{self.name} ({self.servings} servings)"
 
