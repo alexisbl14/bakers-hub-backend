@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from inventory.models import Ingredient
 from .models import Recipe, RecipeIngredient
 from rest_framework import status
+from decimal import Decimal
 
 # Testing suite for Recipes including tests for creating, reading, updating, and deleting
 class RecipeTest(TestCase):
@@ -116,6 +117,38 @@ class RecipeTest(TestCase):
         recipe = Recipe.objects.create(user=self.user, name="Bread", description="", servings=4)
         ri = RecipeIngredient.objects.create(recipe=recipe, ingredient=self.flour, amount=250, unit="g")
         self.assertEqual(str(ri), f"250 g of {self.flour.name} in {recipe.name}")
+
+    def test_calculate_cost_fields(self):
+        """Test that total_cost and cost_per_serving are calculated correctly."""
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+
+        self.assertEqual(get_response.status_code, 200)
+        self.assertIn("total_cost", get_response.data)
+        self.assertIn("cost_per_serving", get_response.data)
+        self.assertIsInstance(get_response.data["total_cost"], float)
+        self.assertIsInstance(get_response.data["cost_per_serving"], float)
+
+        self.assertEqual(get_response.data["total_cost"], 1.42)
+        self.assertEqual(get_response.data["cost_per_serving"], 0.12)
+
+    def test_warning_when_ingredient_data_is_invalid(self):
+        """Test that a warning is returned when an ingredient has invalid quantity or cost."""
+        # Intentionally break one ingredient
+        self.flour.quantity = 0
+        self.flour.save()
+
+        # Post recipe data
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+
+        # Detect warnings
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertIn("warnings", get_response.data)
+        self.assertGreaterEqual(len(get_response.data["warnings"]), 1)
+        self.assertIn("Flour", get_response.data["warnings"][0])
 
 
 
