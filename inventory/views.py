@@ -18,4 +18,8 @@ class IngredientListCreateView(generics.ListCreateAPIView):
 
 class IngredientDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = IngredientSerializer
-    queryset = Ingredient.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # only show ingredients for logged in user
+        return Ingredient.objects.filter(user=self.request.user)
