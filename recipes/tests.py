@@ -86,7 +86,7 @@ class RecipeTest(TestCase):
         """Test retrieving the details of a single recipe by ID."""
         post_response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = post_response.data['id']
-        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/")
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_response.data['name'], "Test Cake")
 
@@ -94,7 +94,7 @@ class RecipeTest(TestCase):
         """Test deleting a recipe and confirm it is removed from the database."""
         post_response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = post_response.data['id']
-        delete_response = self.client.delete(f"/api/recipes/{recipe_id}")
+        delete_response = self.client.delete(f"/api/recipes/{recipe_id}/")
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Recipe.objects.count(), 0)
 
@@ -103,7 +103,7 @@ class RecipeTest(TestCase):
         post_response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = post_response.data['id']
         update_data = {"name": "Updated Cake", "description": "Just an updated testing cake", "servings": 6}
-        patch_response = self.client.patch(f"/api/recipes/{recipe_id}", update_data, format='json')
+        patch_response = self.client.patch(f"/api/recipes/{recipe_id}/", update_data, format='json')
         self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
         self.assertEqual(patch_response.data['name'], "Updated Cake")
 
@@ -122,7 +122,7 @@ class RecipeTest(TestCase):
         """Test that total_cost and cost_per_serving are calculated correctly."""
         response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = response.data['id']
-        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/")
 
         self.assertEqual(get_response.status_code, 200)
         self.assertIn("total_cost", get_response.data)
@@ -142,7 +142,7 @@ class RecipeTest(TestCase):
         # Post recipe data
         response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = response.data['id']
-        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/")
 
         # Detect warnings
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
@@ -155,7 +155,7 @@ class RecipeTest(TestCase):
         self.recipe_data["servings"] = 0
         response = self.client.post("/api/recipes/", self.recipe_data, format='json')
         recipe_id = response.data['id']
-        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/")
 
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_response.data["cost_per_serving"], 0.0)
