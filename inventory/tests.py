@@ -10,8 +10,9 @@ class IngredientTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(username="baker", password="testpass")
+        # force authenticate the user created
+        self.client.force_authenticate(user=self.user)
         self.ingredient_data = {
-            "user": self.user.id,
             "name": "Butter",
             "quantity": 200,
             "unit": "grams",
