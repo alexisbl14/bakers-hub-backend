@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from inventory.models import Ingredient
 from .models import Recipe, RecipeIngredient
 from rest_framework import status
-from decimal import Decimal
 
 # Testing suite for Recipes including tests for creating, reading, updating, and deleting
 class RecipeTest(TestCase):
