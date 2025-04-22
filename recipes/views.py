@@ -3,7 +3,7 @@ from .models import Recipe, RecipeIngredient
 from .serializers import RecipeIngredientSerializer, RecipeSerializer
 
 # Create your views here.
-class RecipeCreateView(generics.ListCreateAPIView):
+class RecipeListCreateView(generics.ListCreateAPIView):
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
     # ensure only users logged in can access the view
