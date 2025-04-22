@@ -26,6 +26,7 @@ class UserAuthTests(TestCase):
     def test_login_user(self):
         # First register the user
         self.client.post(self.register_url, self.user_data, format='json')
+
         # Now test login
         login_data = {
             "username": "testuser",
