@@ -1,5 +1,4 @@
-from http import server
-from rest_framework import generics, permissions
+from rest_framework import generics
 from .models import Ingredient
 from .serializers import IngredientSerializer
 
