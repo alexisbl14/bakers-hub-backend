@@ -20,7 +20,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'description', 'servings', 'created_at', 'ingredients', 'total_cost', 'cost_per_serving']
+        fields = ['id', 'name', 'description', 'servings', 'created_at', 'ingredients', 'total_cost', 'cost_per_serving', 'warnings']
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
@@ -33,24 +33,24 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     # Get total cost of the recipe
     def get_total_cost(self, obj):
-        total = 0
+        total = Decimal("0.00")
         for item in obj.ingredients.all():
             try:
                 # Converting to decimal before calculations
                 # Amount of ingredient / Total amount of ingredient in inventory
-                unit_cost = (Decimal(str(item.amount)) / Decimal(str(item.ingredient.quantity))) * item.ingredient.cost
+                unit_cost = (Decimal(str(item.amount)) / Decimal(str(item.ingredient.quantity))) * Decimal(str(item.ingredient.cost))
                 total += unit_cost
             except (ZeroDivisionError, InvalidOperation, AttributeError):
                 continue
-        return round(total, 2)
+        return float(round(total, 2))
 
     # Get the cost of one serving of the recipe
     def get_cost_per_serving(self, obj):
         try:
             # Converting to decimal before calculations
-            return round(self.get_total_cost(obj) / Decimal(str(obj.servings)), 2)
+            return round(self.get_total_cost(obj) / obj.servings, 2)
         except (ZeroDivisionError, InvalidOperation):
-            return 0
+            return 0.0
 
     # Get warnings when ingredient cost calculation was skipped due to errors with quantity or cost
     def get_warnings(self, obj):
