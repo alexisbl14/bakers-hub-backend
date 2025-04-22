@@ -22,12 +22,14 @@ class IngredientTests(TestCase):
         }
 
     def test_create_ingredient(self):
+        """Test that an authenticated user can create an ingredient successfully."""
         response = self.client.post('/api/inventory/ingredients/', self.ingredient_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Ingredient.objects.count(), 1)
         self.assertEqual(Ingredient.objects.get().name, "Butter")
 
     def test_list_ingredients(self):
+        """Test that the user can list their ingredients."""
         Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
                                    expiration_date="2025-12-31", low_stock_threshold=20)
         response = self.client.get('/api/inventory/ingredients/')

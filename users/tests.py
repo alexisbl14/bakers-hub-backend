@@ -18,12 +18,14 @@ class UserAuthTests(TestCase):
         }
 
     def test_register_user(self):
+        """Test that a user can successfully register with valid credentials."""
         response = self.client.post(self.register_url, self.user_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(User.objects.get().username, "testuser")
 
     def test_login_user(self):
+        """Test that a registered user can successfully log in and receive a response."""
         # First register the user
         self.client.post(self.register_url, self.user_data, format='json')
 
