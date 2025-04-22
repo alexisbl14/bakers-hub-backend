@@ -159,5 +159,26 @@ class RecipeTest(TestCase):
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_response.data["cost_per_serving"], 0.0)
 
+    def test_profit_margin_suggested_price(self):
+        """Test that suggested price is returned with a valid margin query param."""
+        post_response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = post_response.data['id']
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/?margin=0.25")
+
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertIn("suggested_price", get_response.data)
+        self.assertIsInstance(get_response.data["suggested_price"], float)
+        self.assertEqual(get_response.data["suggested_price"], 1.78)
+
+    def test_profit_margin_suggested_price_invalid(self):
+        """Test that suggested_price shows "Invalid margin" when margin entered is invalid."""
+        post_response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = post_response.data['id']
+        get_response = self.client.get(f"/api/recipes/{recipe_id}/?margin=invalid")
+
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data["suggested_price"], "Invalid margin")
+
+
 
 
