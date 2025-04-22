@@ -150,5 +150,15 @@ class RecipeTest(TestCase):
         self.assertGreaterEqual(len(get_response.data["warnings"]), 1)
         self.assertIn("Flour", get_response.data["warnings"][0])
 
+    def test_cost_per_serving_zero_servings(self):
+        """Test that cost_per_serving returns 0.0 when servings is zero (ZeroDivisionError)."""
+        self.recipe_data["servings"] = 0
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        get_response = self.client.get(f"/api/recipes/{recipe_id}")
+
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_response.data["cost_per_serving"], 0.0)
+
 
 
