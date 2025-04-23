@@ -50,8 +50,6 @@ def add_inventory(request, pk):
 
     except Ingredient.DoesNotExist:
         return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
-    except InvalidOperation:
-        return Response({"error": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
 
 # Deduct Amount from Ingredient
 @api_view(['POST'])
@@ -77,5 +75,3 @@ def deduct_inventory(request, pk):
 
     except Ingredient.DoesNotExist:
         return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
-    except InvalidOperation:
-        return Response({"error": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
