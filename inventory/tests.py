@@ -40,7 +40,7 @@ class IngredientTests(TestCase):
         """Test retrieving a single ingredient via detail view."""
         ingredient = Ingredient.objects.create(user=self.user, name="Vanilla", quantity=10, unit="ml", cost=2.50,
                                    expiration_date="2025-12-31", low_stock_threshold=5)
-        get_response = self.client.get(f"/api/inventory/ingredients/{ingredient.id}")
+        get_response = self.client.get(f"/api/inventory/ingredients/{ingredient.id}/")
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_response.data['name'], "Vanilla")
 
