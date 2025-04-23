@@ -5,7 +5,6 @@ from .models import Ingredient
 from rest_framework import status
 
 
-# Create your tests here.
 class IngredientTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -48,3 +47,91 @@ class IngredientTests(TestCase):
         """Test that the string representation of Ingredient returns the name."""
         ingredient = Ingredient.objects.create(user=self.user, name="Salt", quantity=50, unit="g", cost=1.00, expiration_date="2025-12-31", low_stock_threshold=10)
         self.assertEqual(str(ingredient), "Salt (50 g)")
+
+    def test_add_amount_to_ingredient(self):
+        """Test adding inventory with a valid amount updates quantity correctly."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/add/", { "amount": 100}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["new_quantity"], 200)
+        ingredient.refresh_from_db()
+        self.assertEqual(ingredient.quantity, 200)
+
+    def test_add_amount_to_ingredient_missing_amount(self):
+        """Test adding inventory with a missing amount produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/add/", {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_add_amount_to_ingredient_negative_amount(self):
+        """Test adding inventory with a negative amount produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/add/", { "amount": -100}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_add_amount_to_ingredient_invalid_type_amount(self):
+        """Test adding inventory with an amount with an invalid type produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/add/", { "amount": "abc"}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_add_amount_to_ingredient_does_not_exist(self):
+        """Test adding to an ingredient that doesn't exist produces an error and 404 status."""
+        response = self.client.post(f"/api/inventory/ingredients/3/add/", { "amount": 10}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("error", response.data)
+
+    def test_deduct_ingredient_valid_amount(self):
+        """Test deducting inventory with a valid amount updates quantity correctly."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/deduct/", { "amount": 100}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["new_quantity"], 0)
+        ingredient.refresh_from_db()
+        self.assertEqual(ingredient.quantity, 0)
+
+    def test_deduct_ingredient_missing_amount(self):
+        """Test deducting inventory with a missing amount produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/deduct/", {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_deduct_ingredient_negative_amount(self):
+        """Test deducting inventory with a negative amount produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/deduct/", { "amount": -100}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_deduct_ingredient_invalid_type_amount(self):
+        """Test deducting inventory with an amount with an invalid type produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/deduct/", { "amount": "abc"}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_deduct_ingredient_too_much(self):
+        """Test deducting more than available produces an error and 400 status."""
+        ingredient = Ingredient.objects.create(user=self.user, name="Sugar", quantity=100, unit="grams", cost=1.50,
+                                   expiration_date="2025-12-31", low_stock_threshold=20)
+        response = self.client.post(f"/api/inventory/ingredients/{ingredient.id}/deduct/", { "amount": 101}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_deduct_amount_to_ingredient_does_not_exist(self):
+        """Test deducting from an ingredient that doesn't exist produces an error and 404 status."""
+        response = self.client.post(f"/api/inventory/ingredients/3/deduct/", { "amount": 10}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("error", response.data)
