@@ -68,7 +68,7 @@ def deduct_inventory(request, pk):
         if amount <= 0:
             return Response({"error": "Amount must be positive."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if ingredient.quanity < amount:
+        if ingredient.quantity < amount:
             return Response({"error": "Not enough inventory to deduct."}, status=status.HTTP_400_BAD_REQUEST)
 
         ingredient.quantity -= amount
