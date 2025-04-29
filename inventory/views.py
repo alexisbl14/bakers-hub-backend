@@ -51,6 +51,10 @@ def add_inventory(request, pk):
     except Ingredient.DoesNotExist:
         return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
 
+def deduct_inventory_internal(user, ingredient_id, amount):
+    """Deduct a specified amount from an ingredient's quantity."""
+    
+
 # Deduct Amount from Ingredient
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])

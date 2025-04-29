@@ -1,8 +1,9 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from .models import Recipe, RecipeIngredient
 from .serializers import RecipeIngredientSerializer, RecipeSerializer
 from decimal import Decimal, InvalidOperation
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 
 # Create your views here.
 class RecipeListCreateView(generics.ListCreateAPIView):
@@ -43,3 +44,25 @@ class RecipeDetailView(generics.RetrieveUpdateDestroyAPIView):
                 data["suggested_price"] = "Invalid margin"
 
         return Response(data)
+
+# Bake a recipe, deduct amount from Ingredients given
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def bake_recipe(request, pk):
+    """Bake a specific recipe, with 1/2, single, or double batch options."""
+    try:
+        recipe = Recipe.objects.get(pk=pk, user=request.user)
+    except Recipe.DoesNotExist:
+        return Response({"error": "Recipe Not Found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Get batch scaling from user
+    batch_scaler = request.data.get('batch_scale', 1)
+    try:
+        batch_scaler = float(batch_scaler)
+        if batch_scaler <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return Response({"error": "Multiplier must be a positive number."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check inventory
+    
