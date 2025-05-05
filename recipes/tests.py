@@ -45,6 +45,7 @@ class RecipeTest(TestCase):
 
     def test_create_recipe(self):
         """Test creating a recipe with multiple nested ingredients and validate the link."""
+        # Create the recipe
         response = self.client.post('/api/recipes/', self.recipe_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Recipe.objects.count(), 1)
@@ -179,6 +180,52 @@ class RecipeTest(TestCase):
         self.assertEqual(get_response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_response.data["suggested_price"], "Invalid margin")
 
+    def test_successful_bake_deducts_inventory(self):
+        """Test that baking a recipe deducts ingredient amounts from inventory."""
+        # Post recipe data
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        bake_response = self.client.post(f"/api/recipes/{recipe_id}/bake/", {"batch_scale": 1}, format="json")
 
+        self.assertEqual(bake_response.status_code, status.HTTP_200_OK)
+        self.flour.refresh_from_db()
+        self.assertEqual(self.flour.quantity, 650)
+        self.sugar.refresh_from_db()
+        self.assertEqual(self.sugar.quantity, 850)
+
+    def test_insufficient_inventory_blocks_bake(self):
+        """Test that baking fails when there's not enough inventory."""
+        # Post recipe data
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        bake_response = self.client.post(f"/api/recipes/{recipe_id}/bake/", {"batch_scale": 4}, format="json")
+
+        self.assertEqual(bake_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", bake_response.data)
+        self.flour.refresh_from_db()
+        self.assertEqual(self.flour.quantity, 1000)
+        self.sugar.refresh_from_db()
+        self.assertEqual(self.sugar.quantity, 1000)
+
+    def test_multiplier_doubles_deduction(self):
+        """Test that the batch scale scales inventory deduction correctly."""
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        bake_response = self.client.post(f"/api/recipes/{recipe_id}/bake/", {"batch_scale": 2}, format="json")
+
+        self.assertEqual(bake_response.status_code, status.HTTP_200_OK)
+        self.flour.refresh_from_db()
+        self.assertEqual(self.flour.quantity, 300)
+        self.sugar.refresh_from_db()
+        self.assertEqual(self.sugar.quantity, 700)
+
+    def test_invalid_multipler_returns_error(self):
+        """Test that an invalid multiplier returns an error."""
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        bake_response = self.client.post(f"/api/recipes/{recipe_id}/bake/", {"batch_scale": -1}, format="json")
+
+        self.assertEqual(bake_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", bake_response.data)
 
 
