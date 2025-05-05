@@ -5,29 +5,6 @@ from .models import Ingredient
 from .serializers import IngredientSerializer
 from decimal import Decimal, InvalidOperation
 
-# Deduct Amount from Ingredient (Internal Helper)
-def deduct_inventory_internal(user, ingredient_id, req_amount):
-    """Deduct a specified amount from an ingredient's quantity."""
-    try:
-        ingredient = Ingredient.objects.get(pk=ingredient_id, user=user)
-        try:
-            amount = float(req_amount)
-        except (TypeError, ValueError):
-            return Response({"error": "Amount must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if amount <= 0:
-            return Response({"error": "Amount must be positive."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if ingredient.quantity < amount:
-            return Response({"error": "Not enough inventory to deduct."}, status=status.HTTP_400_BAD_REQUEST)
-
-        ingredient.quantity -= amount
-        ingredient.save()
-        return Response({"message": "Inventory added.", "new_quantity": float(ingredient.quantity)})
-
-    except Ingredient.DoesNotExist:
-        return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
-
 # Create Ingredient View
 class IngredientListCreateView(generics.ListCreateAPIView):
     serializer_class = IngredientSerializer
@@ -67,6 +44,29 @@ def add_inventory(request, pk):
             return Response({"error": "Amount must be positive."}, status=status.HTTP_400_BAD_REQUEST)
 
         ingredient.quantity += amount
+        ingredient.save()
+        return Response({"message": "Inventory added.", "new_quantity": float(ingredient.quantity)})
+
+    except Ingredient.DoesNotExist:
+        return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
+
+# Deduct Amount from Ingredient (Internal Helper)
+def deduct_inventory_internal(user, ingredient_id, req_amount):
+    """Deduct a specified amount from an ingredient's quantity."""
+    try:
+        ingredient = Ingredient.objects.get(pk=ingredient_id, user=user)
+        try:
+            amount = float(req_amount)
+        except (TypeError, ValueError):
+            return Response({"error": "Amount must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if amount <= 0:
+            return Response({"error": "Amount must be positive."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if ingredient.quantity < amount:
+            return Response({"error": "Not enough inventory to deduct."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ingredient.quantity -= amount
         ingredient.save()
         return Response({"message": "Inventory added.", "new_quantity": float(ingredient.quantity)})
 
