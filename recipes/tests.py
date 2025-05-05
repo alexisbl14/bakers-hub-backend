@@ -228,4 +228,13 @@ class RecipeTest(TestCase):
         self.assertEqual(bake_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", bake_response.data)
 
+    def test_bake_unknown_recipe(self):
+        """Test that baking a recipe that doesn't exist returns an error."""
+        # Post recipe data
+        response = self.client.post("/api/recipes/", self.recipe_data, format='json')
+        recipe_id = response.data['id']
+        bake_response = self.client.post(f"/api/recipes/{recipe_id + 1}/bake/", {"batch_scale": 1}, format="json")
+
+        self.assertEqual(bake_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("error", bake_response.data)
 
