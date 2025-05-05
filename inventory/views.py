@@ -58,20 +58,20 @@ def deduct_inventory_internal(user, ingredient_id, req_amount):
         try:
             amount = float(req_amount)
         except (TypeError, ValueError):
-            return Response({"error": "Amount must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+            return {"error": "Amount must be a valid number.", "status": status.HTTP_400_BAD_REQUEST}
 
         if amount <= 0:
-            return Response({"error": "Amount must be positive."}, status=status.HTTP_400_BAD_REQUEST)
+            return {"error": "Amount must be positive.", "status" : status.HTTP_400_BAD_REQUEST}
 
         if ingredient.quantity < amount:
-            return Response({"error": "Not enough inventory to deduct."}, status=status.HTTP_400_BAD_REQUEST)
+            return {"error": "Not enough inventory to deduct.", "status" : status.HTTP_400_BAD_REQUEST}
 
         ingredient.quantity -= amount
         ingredient.save()
-        return Response({"message": "Inventory added.", "new_quantity": float(ingredient.quantity)})
+        return {"message": "Inventory added.", "new_quantity": float(ingredient.quantity)}
 
     except Ingredient.DoesNotExist:
-        return Response({"error": "Ingredient Not Found."}, status=status.HTTP_404_NOT_FOUND)
+        return {"error": "Ingredient Not Found.", "status": status.HTTP_404_NOT_FOUND}
 
 # Deduct Amount from Ingredient (API View)
 @api_view(['POST'])
@@ -83,6 +83,6 @@ def deduct_inventory(request, pk):
     result = deduct_inventory_internal(request.user, pk, amount)
 
     if "error" in result:
-        return Response({"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": result["error"]}, status=result["status"])
 
-    return Response({"message": "Inventory deducted.", "new_quantity": result["new_quantity"]}, status=200)
+    return Response({"message": "Inventory deducted.", "new_quantity": result["new_quantity"]}, status=status.HTTP_200_OK)
