@@ -1,9 +1,14 @@
+from asyncio.base_subprocess import ReadSubprocessPipeProto
+from shutil import ExecError
 from rest_framework import generics, permissions, status
+
+from inventory.views import deduct_inventory_internal
 from .models import Recipe, RecipeIngredient
 from .serializers import RecipeIngredientSerializer, RecipeSerializer
 from decimal import Decimal, InvalidOperation
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from django.db import transaction
 
 # Create your views here.
 class RecipeListCreateView(generics.ListCreateAPIView):
@@ -64,5 +69,17 @@ def bake_recipe(request, pk):
     except (ValueError, TypeError):
         return Response({"error": "Multiplier must be a positive number."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Check inventory
-    
+    try:
+        # transaction block with atomic
+        with transaction.atomic():
+            for item in recipe.ingredients.all():
+                required_amt = item.amount * batch_scaler
+                result = deduct_inventory_internal(request.user, item.ingredient_id, required_amt)
+
+                if "error" in result:
+                    # raise error in atomic block to rollback transactions automatically
+                    raise Exception(f"Not enough {item.ingredient.name}: {result['error']}")
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({"message" : f"Successfully baked '{recipe.name}'!", "batch scale": batch_scaler}, status=status.HTTP_200_OK)
